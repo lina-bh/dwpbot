@@ -1,0 +1,27 @@
+{
+  "name": "dwpbot",
+  "version": "2.0.0",
+  "description": "Benefit-claiming Discord bot",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p .",
+    "start": "node ./build/main.js"
+  },
+  "dependencies": {
+    "@types/better-sqlite3": "*",
+    "@types/lodash": "*",
+    "@types/node": "^8",
+    "@types/winston": "^2",
+    "better-sqlite3": "^4",
+    "date-fns": "^1",
+    "discord.js": "^11",
+    "lodash": "^4",
+    "sqlite": "^2",
+    "winston": "^2"
+  },
+  "devDependencies": {
+    "node-gyp": "^3",
+    "tslint": "^5",
+    "typescript": "^2"
+  }
+}
