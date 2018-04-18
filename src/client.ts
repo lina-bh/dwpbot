@@ -16,6 +16,6 @@ client.on("ready", () => {
 });
 
 client.on("error", (err) => {
-    logger.error(err.stack);
+    console.error(err);
     process.exit(1);
 });
