@@ -282,6 +282,7 @@ async function give(message: discord.Message) {
     logger.info(`${author.tag} gave £${gift} to £${target.tag}`);
     return channel.send(`${author} you gave £${gift} to ${target}`);
 }
+commands.set("give", give);
 
 /*
 export function help(message) {
