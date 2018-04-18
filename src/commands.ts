@@ -263,9 +263,9 @@ export function bans(message) {
 async function give(message: discord.Message) {
     const { channel, author, guild: server } = message;
     const menchies = message.mentions.users.array();
-    if (mugs.length < 1) {
+    if (menchies.length < 1) {
         return channel.send(`${author} give to whom?`);
-    } else if (mugs.length > 1) {
+    } else if (menchies.length > 1) {
         return channel.send(`${author} only one at a time`);
     }
     const target = menchies[0];
