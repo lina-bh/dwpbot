@@ -50,7 +50,7 @@ commands.set("bet", async function bet(message) {
         );
     }
 
-    const won = flip();
+    const won = Math.random() >= 0.5;
     if (won) {
         await db.incrBalance(user, server, bet);
         logger.info(`${user.tag} won £${bet}`);
