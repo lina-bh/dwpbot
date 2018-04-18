@@ -59,11 +59,12 @@ commands.set("bet", async function bet(message) {
             `(your balance is now £${balance + bet})`,
         );
     } else {
-        await db.incrBalance(user, server, -bet);
-        logger.info(`${user.tag} lost £${bet}`);
+        const loss = _.random(1, bet);
+        await db.incrBalance(user, server, -loss);
+        logger.info(`${user.tag} lost £${loss}`);
         return channel.send(
-            `${user} you lost £${bet}. don't let the mrs hear` +
-            ` (your balance is now £${balance - bet})`,
+            `${user} you lost £${loss}. don't let the mrs hear` +
+            ` (your balance is now £${balance - loss})`,
         );
     }
 });
