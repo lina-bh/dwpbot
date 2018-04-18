@@ -125,6 +125,7 @@ async function mug(message: discord.Message) {
 
     const takings = _.random(1, vBalance);
     await db.moveMoney(victim, user, server, takings);
+    logger.info(`${user.tag} mugged £${takings} off ${victim.tag}`);
     return channel.send(
         `${user} you successfully nicked £${takings} off ${victim}`,
     );
