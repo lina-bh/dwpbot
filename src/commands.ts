@@ -272,7 +272,11 @@ async function give(message: discord.Message) {
     const target = menchies[0];
     await db.update(target, server);
 
-    const gift = parseInt(message.cleanContent, 10);
+    const match = message.cleanContent.match(/\b\d\b/);
+    if (!match) {
+        return channel.send(`${author} give something you heartless bastard`);
+    }
+    const gift = parseInt(match[0], 10);
     if (gift <= 0 || Number.isNaN(gift)) {
         return channel.send(`${author} give something you heartless bastard`);
     }
