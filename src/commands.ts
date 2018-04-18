@@ -113,7 +113,7 @@ async function mug(message: discord.Message) {
         return channel.send(`${user} they have NOTHING`);
     }
 
-    const success = Math.random() >= vBalance / await db.totalMoney(server);
+    const success = Math.random() <= vBalance / await db.totalMoney(server);
     if (!success) {
         await db.setLastInPrison(user, server);
         logger.info(`${user.tag} was caught`);
