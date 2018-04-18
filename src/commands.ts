@@ -258,54 +258,31 @@ export function bans(message) {
     }
     channel.send("```" + bans.join("\n") + "```");
 };
-
-export function give(message) {
-    const { channel, author, guild } = message;
-
-    const mugs = message.mentions.users.array();
-    if (mugs.length !== 1) {
-        const what = (mugs.length > 1) ? "you can only give to one at a time" : "give to whom?";
-        channel.send(`${author} ${what}`);
-        return;
+*/
+async function give(message: discord.Message) {
+    const { channel, author, guild: server } = message;
+    const menchies = message.mentions.users.array();
+    if (mugs.length < 1) {
+        return channel.send(`${author} give to whom?`);
+    } else if (mugs.length > 1) {
+        return channel.send(`${author} only one at a time`);
     }
-    const recipient = mugs[0];
-    if (!db.exists(recipient, guild)) {
-        channel.send(`${author} nah they need to sign on first`);
-        return;
-    }
+    const target = menchies[0];
+    await db.update(target, server);
 
-    const args = message.content.slice(1).split(" ");
-    const gift = parseInt(args[1], 10);
-    if (isNaN(gift) || gift <= 0) {
-        channel.send(`${author} give something you heartless bastard`);
-        return;
+    const gift = parseInt(message.cleanContent, 10);
+    if (gift <= 0 || Number.isNaN(gift)) {
+        return channel.send(`${author} give something you heartless bastard`);
     }
-
-    const balance = db.prepare("SELECT balance FROM users WHERE id = ? AND server = ?").pluck().get(author.id, guild.id);
-    if (typeof balance === "undefined") {
-        db.new(author, guild);
-        channel.send(`${author} you have nothing to give`);
-        return;
+    if (gift > await db.balance(author, server)) {
+        return channel.send(`${author} you don't have the money for that`);
     }
-
-    if (gift > balance) {
-        channel.send(`${author} you don't have the money for that`);
-        return;
-    }
-
-    db.transaction([
-        "UPDATE users SET balance = balance + :gift WHERE id = :taker AND server = :server",
-        "UPDATE users SET balance = balance - :gift WHERE id = :giver AND server = :server"
-    ]).run({
-        gift,
-        taker: recipient.id,
-        giver: author.id,
-        server: guild.id
-    });
-    console.log(`${misc.ts()}: ${author.tag} gave £${gift} to ${recipient.tag}`);
-    channel.send(`${author} you gave £${gift} to ${recipient}`);
+    await db.moveMoney(author, target, server, gift);
+    logger.info(`${author.tag} gave £${gift} to £${target.tag}`);
+    return channel.send(`${author} you gave £${gift} to ${target}`);
 }
 
+/*
 export function help(message) {
     const { channel } = message;
     channel.send("```" + `
