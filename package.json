@@ -8,10 +8,6 @@
     "start": "node ./build/main.js"
   },
   "dependencies": {
-    "@types/better-sqlite3": "*",
-    "@types/lodash": "*",
-    "@types/node": "^8",
-    "@types/winston": "^2",
     "better-sqlite3": "^4",
     "date-fns": "^1",
     "discord.js": "^11",
@@ -20,6 +16,10 @@
     "winston": "^2"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "*",
+    "@types/lodash": "*",
+    "@types/node": "^8",
+    "@types/winston": "^2",
     "node-gyp": "^3",
     "tslint": "^5",
     "typescript": "^2"
