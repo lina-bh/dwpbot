@@ -11,7 +11,7 @@
     "better-sqlite3": "^4",
     "date-fns": "^1",
     "discord.js": "^11",
-    "lodash": "^4",
+    "lodash": "^4.17.13",
     "sqlite": "^2",
     "winston": "^2"
   },
