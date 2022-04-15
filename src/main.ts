@@ -51,7 +51,7 @@ client.on("message", async (message) => {
             .slice(1)
             .toLowerCase()
             .split(" ")
-            .shift()!;
+            .shift();
         const impl = commands.get(command);
         if (!impl) {
             return;

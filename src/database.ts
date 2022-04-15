@@ -40,12 +40,12 @@ class SqliteDataSource {
     async exists(user: discord.User, guild?: discord.Guild): Promise<boolean> {
         let row;
         if (!guild) {
-            row = await this.db!.get(
+            row = await this.db.get(
                 "SELECT 1 " + "FROM users " + "WHERE id = ?",
                 user.id
             );
         } else {
-            row = await this.db!.get(
+            row = await this.db.get(
                 "SELECT 1 " + "FROM users " + "WHERE id = ? AND server = ?",
                 user.id,
                 guild.id
@@ -58,7 +58,7 @@ class SqliteDataSource {
     }
 
     async update(user: discord.User, guild: discord.Guild) {
-        await this.db!.run(
+        await this.db.run(
             "INSERT OR IGNORE INTO users (id, server) VALUES (?, ?)",
             user.id,
             guild.id
@@ -67,7 +67,7 @@ class SqliteDataSource {
     }
 
     async banned(user: discord.User) {
-        const row = await this.db!.get(
+        const row = await this.db.get(
             "SELECT banned = 1 " + "FROM bans " + "WHERE id = ?",
             user.id
         );
@@ -78,18 +78,18 @@ class SqliteDataSource {
     }
 
     async ban(user: discord.User) {
-        await this.db!.run(
+        await this.db.run(
             "INSERT OR REPLACE " + "INTO bans (id) " + "VALUES (?)",
             user.id
         );
     }
 
     async unban(user: discord.User) {
-        await this.db!.run("DELETE FROM bans " + "WHERE id = ?", user.id);
+        await this.db.run("DELETE FROM bans " + "WHERE id = ?", user.id);
     }
 
     async balance(user: discord.User, server: discord.Guild) {
-        const row = await this.db!.get(
+        const row = await this.db.get(
             "SELECT balance FROM users WHERE id = ? AND server = ?",
             user.id,
             server.id
@@ -105,7 +105,7 @@ class SqliteDataSource {
         server: discord.Guild,
         amount: number
     ) {
-        await this.db!.run(
+        await this.db.run(
             "UPDATE users SET balance = balance + ? WHERE id = ? AND server = ?",
             amount,
             user.id,
@@ -138,7 +138,7 @@ class SqliteDataSource {
     }
 
     async totalMoney(server: discord.Guild) {
-        const row = await this.db!.get(
+        const row = await this.db.get(
             "SELECT SUM(balance) total FROM users WHERE server = ?",
             server.id
         );
@@ -149,7 +149,7 @@ class SqliteDataSource {
     }
 
     async getLastSignon(user: discord.User, server: discord.Guild) {
-        const row = await this.db!.get(
+        const row = await this.db.get(
             "SELECT lastSignon FROM users WHERE id = ? AND server = ?",
             user.id,
             server.id
@@ -161,7 +161,7 @@ class SqliteDataSource {
     }
 
     async setLastSignon(user: discord.User, server: discord.Guild) {
-        await this.db!.run(
+        await this.db.run(
             "UPDATE users SET lastSignon = CAST(STRFTIME('%s', 'now') AS INTEGER) WHERE id = ? AND server = ?",
             user.id,
             server.id
@@ -170,7 +170,7 @@ class SqliteDataSource {
     }
 
     async getLastInPrison(user: discord.User, server: discord.Guild) {
-        const row = await this.db!.get(
+        const row = await this.db.get(
             "SELECT lastStretch FROM users WHERE id = ? AND server = ?",
             user.id,
             server.id
@@ -182,7 +182,7 @@ class SqliteDataSource {
     }
 
     async setLastInPrison(user: discord.User, server: discord.Guild) {
-        await this.db!.run(
+        await this.db.run(
             "UPDATE users SET lastStretch = CAST(STRFTIME('%s', 'now') AS INTEGER) WHERE id = ? AND server = ?",
             user.id,
             server.id
@@ -191,7 +191,7 @@ class SqliteDataSource {
     }
 
     async getPlayers(server: discord.Guild) {
-        return await this.db!.all(
+        return await this.db.all(
             "SELECT id, balance FROM users WHERE server = ?",
             server.id
         );
