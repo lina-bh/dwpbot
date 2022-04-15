@@ -1,25 +1,28 @@
 {
-  "name": "dwpbot",
-  "version": "2.0.0",
-  "description": "Benefit-claiming Discord bot",
-  "private": true,
-  "scripts": {
-    "build": "tsc -p .",
-    "start": "node ./build/main.js"
-  },
-  "dependencies": {
-    "better-sqlite3": "7.5.1",
-    "date-fns": "^1",
-    "discord.js": "^13",
-    "lodash": "^4.17.13",
-    "sqlite": "^4",
-    "sqlite3": "^5.0.3"
-  },
-  "devDependencies": {
-    "@types/better-sqlite3": "*",
-    "@types/lodash": "*",
-    "@types/node": "^8",
-    "prettier": "^2.6.2",
-    "typescript": "^4"
-  }
+    "name": "dwpbot",
+    "version": "2.0.0",
+    "description": "Benefit-claiming Discord bot",
+    "private": true,
+    "scripts": {
+        "build": "tsc -p .",
+        "start": "node ./build/main.js"
+    },
+    "dependencies": {
+        "better-sqlite3": "7.5.1",
+        "date-fns": "^1",
+        "discord.js": "^11",
+        "lodash": "^4.17.13",
+        "sqlite": "^4",
+        "sqlite3": "^5.0.3"
+    },
+    "devDependencies": {
+        "@types/better-sqlite3": "*",
+        "@types/lodash": "*",
+        "@types/node": "^8",
+        "@typescript-eslint/eslint-plugin": "^5.19.0",
+        "@typescript-eslint/parser": "^5.19.0",
+        "eslint": "^8.13.0",
+        "prettier": "^2.6.2",
+        "typescript": "^4"
+    }
 }
