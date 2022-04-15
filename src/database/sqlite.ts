@@ -4,14 +4,18 @@ import BetterSqlite3Database from "better-sqlite3";
 import options from "../options";
 import IDataSource from "./interface";
 import * as logger from "winston";
+import * as sqlite3 from "sqlite3";
 
 export default class SqliteDataSource implements IDataSource {
     private db?: sqlite.Database;
-    private dbSync?: BetterSqlite3Database;
+    private dbSync?: BetterSqlite3Database.Database;
 
     private async open(database: string) {
         this.dbSync = new BetterSqlite3Database(database);
-        this.db = await sqlite.open(database);
+        this.db = await sqlite.open({
+            filename: database,
+            driver: sqlite3.Database
+        });
         logger.verbose(database + " opened");
     }
 
@@ -140,18 +144,20 @@ export default class SqliteDataSource implements IDataSource {
         target: discord.User,
         server: discord.Guild,
         amount: number) {
-        this.dbSync!.transaction([
-            "UPDATE users " +
-            "SET balance = balance - :amount " +
-            "WHERE id = :source AND server = :server",
-            "UPDATE users " +
-            "SET balance = balance + :amount " +
-            "WHERE id = :target AND server = :server",
-        ]).run({
-            amount,
-            server: server.id,
-            source: source.id,
-            target: target.id,
+        this.dbSync!.transaction(() => {
+            this.dbSync!.prepare(
+                "UPDATE users " +
+                "SET balance = balance - :amount " +
+                "WHERE id = :source AND server = :server" + ";" +
+                "UPDATE users " +
+                "SET balance = balance + :amount " +
+                "WHERE id = :target AND server = :server",
+            ).run({
+                amount,
+                server: server.id,
+                source: source.id,
+                target: target.id,
+            });
         });
         logger.silly(
             `${amount} moved from ${source.username} to ${target.username}`,
