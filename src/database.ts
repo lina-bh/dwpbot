@@ -120,26 +120,21 @@ class SqliteDataSource {
         server: discord.Guild,
         amount: number
     ) {
-        throw new Error("unimplemented");
-        // this.dbSync!.transaction(() => {
-        //     this.dbSync!.prepare(
-        //         "UPDATE users " +
-        //             "SET balance = balance - :amount " +
-        //             "WHERE id = :source AND server = :server" +
-        //             ";" +
-        //             "UPDATE users " +
-        //             "SET balance = balance + :amount " +
-        //             "WHERE id = :target AND server = :server"
-        //     ).run({
-        //         amount,
-        //         server: server.id,
-        //         source: source.id,
-        //         target: target.id,
-        //     });
-        // });
-        // console.log(
-        //     `${amount} moved from ${source.username} to ${target.username}`
-        // );
+        await this.db.run(
+            "UPDATE users SET balance = balance - ? WHERE id = ? AND server = ?",
+            amount,
+            source,
+            server
+        );
+        await this.db.run(
+            "UPDATE users SET balance = balance + ? WHERE id = ? AND server = ?",
+            amount,
+            target,
+            server
+        );
+        console.log(
+            `${amount} moved from ${source.username} to ${target.username}`
+        );
     }
 
     async totalMoney(server: discord.Guild) {
