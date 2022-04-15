@@ -4,8 +4,7 @@ import addMinutes from "date-fns/add_minutes";
 import db from "./database";
 import distanceInWordsToNow from "date-fns/distance_in_words_to_now";
 import options from "./options";
-import * as logger from "winston";
-import {cantSignon, inPrison, flip} from "./game";
+import { cantSignon, inPrison, flip } from "./game";
 
 const commands = new Map<string, (message: discord.Message) => Promise<any>>();
 export default commands;
@@ -16,7 +15,7 @@ commands.set("signon", async function signon(message) {
     if (await cantSignon(user, server)) {
         const lastSignon = await db.getLastSignon(user, server);
         const when = distanceInWordsToNow(
-            addMinutes(lastSignon, options.signonMinutes),
+            addMinutes(lastSignon, options.signonMinutes)
         );
         return channel.send(`${user} your next payment is in ${when}`);
     }
@@ -25,10 +24,10 @@ commands.set("signon", async function signon(message) {
     await db.incrBalance(user, server, payment);
     await db.setLastSignon(user, server);
     const balance = await db.balance(user, server);
-    logger.info(`${user.tag} claimed £${payment}`);
+    console.log(`${user.tag} claimed £${payment}`);
     return channel.send(
         `${user} £${payment} bennies paid into your account. ` +
-        `your balance is now £${balance}`,
+            `your balance is now £${balance}`
     );
 });
 
@@ -38,33 +37,34 @@ commands.set("bet", async function bet(message) {
 
     const bet = parseInt(args[1], 10);
     if (bet <= 0 || Number.isNaN(bet)) {
-        return channel.send(user +
-            " try putting coins in the machine next time mate");
+        return channel.send(
+            user + " try putting coins in the machine next time mate"
+        );
     }
 
     // throw new Error("not implemented yet");
     const balance = await db.balance(user, server);
     if (bet > balance) {
         return channel.send(
-            `${user} https://www.begambleaware.org: when the fun stops, stop`,
+            `${user} https://www.begambleaware.org: when the fun stops, stop`
         );
     }
 
     const won = Math.random() >= 0.5;
     if (won) {
         await db.incrBalance(user, server, bet);
-        logger.info(`${user.tag} won £${bet}`);
+        console.log(`${user.tag} won £${bet}`);
         return channel.send(
             `${user} you won £${bet}! drinks on you ` +
-            `(your balance is now £${balance + bet})`,
+                `(your balance is now £${balance + bet})`
         );
     } else {
         const loss = _.random(1, bet);
         await db.incrBalance(user, server, -loss);
-        logger.info(`${user.tag} lost £${loss}`);
+        console.log(`${user.tag} lost £${loss}`);
         return channel.send(
             `${user} you lost £${loss}. don't let the mrs hear` +
-            ` (your balance is now £${balance - loss})`,
+                ` (your balance is now £${balance - loss})`
         );
     }
 });
@@ -93,7 +93,7 @@ async function mug(message: discord.Message) {
     if (await inPrison(user, server)) {
         const lastInPrison = await db.getLastInPrison(user, server);
         const when = distanceInWordsToNow(
-            addMinutes(lastInPrison, options.prisonMinutes),
+            addMinutes(lastInPrison, options.prisonMinutes)
         );
         return channel.send(`${user} you're still inside for ${when}`);
     }
@@ -114,21 +114,21 @@ async function mug(message: discord.Message) {
         return channel.send(`${user} they have NOTHING`);
     }
 
-    const success = Math.random() <= vBalance / await db.totalMoney(server);
+    const success = Math.random() <= vBalance / (await db.totalMoney(server));
     if (!success) {
         await db.setLastInPrison(user, server);
-        logger.info(`${user.tag} was caught`);
+        console.log(`${user.tag} was caught`);
         return channel.send(
             `${user} you were caught by a bastard copper! ` +
-            `that's ${options.prisonMinutes} minutes inside for you`,
+                `that's ${options.prisonMinutes} minutes inside for you`
         );
     }
 
     const takings = _.random(1, vBalance);
     await db.moveMoney(victim, user, server, takings);
-    logger.info(`${user.tag} mugged £${takings} off ${victim.tag}`);
+    console.log(`${user.tag} mugged £${takings} off ${victim.tag}`);
     return channel.send(
-        `${user} you successfully nicked £${takings} off ${victim}`,
+        `${user} you successfully nicked £${takings} off ${victim}`
     );
 }
 commands.set("mug", mug);
@@ -157,15 +157,18 @@ export function whois(message) {
 
 async function players(message: discord.Message) {
     const { author, channel, guild: server } = message;
-    const players = (await db.getPlayers(server)).map((player) => {
-        try {
-            const user = server.members.get(player.id);
-            player.name = user.nickname || user.user.username;
-            return player;
-        } catch (ex) {
-            return null;
-        }
-    }).filter(Boolean).sort((a, b) => b.balance - a.balance);
+    const players = (await db.getPlayers(server))
+        .map((player) => {
+            try {
+                const user = server.members.get(player.id);
+                player.name = user.nickname || user.user.username;
+                return player;
+            } catch (ex) {
+                return null;
+            }
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.balance - a.balance);
     let buf = "```";
     for (const user of players) {
         buf += `${user.name}: £${user.balance}\n`;
@@ -280,11 +283,11 @@ async function give(message: discord.Message) {
     if (gift <= 0 || Number.isNaN(gift)) {
         return channel.send(`${author} give something you heartless bastard`);
     }
-    if (gift > await db.balance(author, server)) {
+    if (gift > (await db.balance(author, server))) {
         return channel.send(`${author} you don't have the money for that`);
     }
     await db.moveMoney(author, target, server, gift);
-    logger.info(`${author.tag} gave £${gift} to £${target.tag}`);
+    console.log(`${author.tag} gave £${gift} to £${target.tag}`);
     return channel.send(`${author} you gave £${gift} to ${target}`);
 }
 commands.set("give", give);

@@ -6,7 +6,8 @@ import * as crypto from "crypto";
 
 export async function cantSignon(
     user: discord.User,
-    server: discord.Guild): Promise<boolean> {
+    server: discord.Guild
+): Promise<boolean> {
     const lastSignon = await db.getLastSignon(user, server);
     const diff = differenceInMinutes(Date.now(), lastSignon);
     return diff < options.signonMinutes;
@@ -14,7 +15,8 @@ export async function cantSignon(
 
 export async function inPrison(
     user: discord.User,
-    server: discord.Guild): Promise<boolean> {
+    server: discord.Guild
+): Promise<boolean> {
     const lastInPrison = await db.getLastInPrison(user, server);
     const diff = differenceInMinutes(Date.now(), lastInPrison);
     return diff < options.prisonMinutes;

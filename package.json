@@ -12,16 +12,14 @@
     "date-fns": "^1",
     "discord.js": "^13",
     "lodash": "^4.17.13",
-    "sqlite": "^2",
-    "winston": "^2"
+    "sqlite": "^4",
+    "sqlite3": "^5.0.3"
   },
   "devDependencies": {
     "@types/better-sqlite3": "*",
     "@types/lodash": "*",
     "@types/node": "^8",
-    "@types/winston": "^2",
-    "node-gyp": "^3",
-    "tslint": "^5",
-    "typescript": "^2"
+    "prettier": "^2.6.2",
+    "typescript": "^4"
   }
 }

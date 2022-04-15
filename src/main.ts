@@ -1,10 +1,10 @@
 "use strict";
 import * as fs from "fs";
-import client from "./client";
+import * as discord from "discord.js";
+
 import commands from "./commands";
 import db from "./database";
 import options from "./options";
-import * as logger from "winston";
 
 let token;
 if (options.tokenEnv in process.env) {
@@ -18,12 +18,32 @@ if (options.tokenEnv in process.env) {
 }
 token = token.replace("Bot ", "").trim();
 
-client.on("message", (message) => {
+const client = new discord.Client({
+    // intents: 3072,
+    // commandPrefix: options.prefix,
+    // nonCommandEditable: false,
+    // owner: options.adminId,
+    // unknownCommandResponse: false,
+});
+export default client;
+
+client.on("ready", () => {
+    console.log("Ready.");
+});
+
+client.on("error", (err) => {
+    console.error(err);
+    process.exit(1);
+});
+
+client.on("message", async (message) => {
     const { author, channel, guild } = message;
-    (async () => {
-        if (author.id === client.user.id ||
+    try {
+        if (
+            author.id === client.user.id ||
             message.content[0] !== options.prefix ||
-            await db.banned(author)) {
+            (await db.banned(author))
+        ) {
             return;
         }
         await db.update(author, guild);
@@ -37,27 +57,22 @@ client.on("message", (message) => {
             return;
         }
         return impl(message);
-    })().catch(async (err) => {
-        logger.error(err);
-        if (author.id !== options.adminId) {
-            const admin = await client.fetchUser(options.adminId);
-            admin.sendMessage("error: ```json\n" + JSON.stringify(err) + "```");
-        }
+    } catch (err) {
+        console.error(err);
+        // if (author.id !== options.adminId) {
+        //     const admin = await client.fetchUser(options.adminId);
+        //     admin.sendMessage("error: ```json\n" + JSON.stringify(err) + "```");
+        // }
         return channel.send(author + " sorry, i fucked up somewhere");
-    });
+    }
 });
 
-logger.remove(logger.transports.Console);
-logger.add(logger.transports.Console, {
-    colorize: true,
-    timestamp: true,
-});
-(logger as any).level = "silly";
-
-db
-    .init()
-    .then(() => client.login("Bot " + token))
-    .catch((err) => {
-    console.error(err);
-    process.exit(1);
-});
+(async () => {
+    try {
+        await db.init();
+        await client.login("Bot " + token);
+    } catch (ex) {
+        console.error(ex instanceof Error ? ex.stack : ex);
+        process.exit(1);
+    }
+})();
