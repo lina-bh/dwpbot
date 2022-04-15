@@ -1,11 +1,10 @@
 import * as sqlite from "sqlite";
 import * as discord from "discord.js";
 import BetterSqlite3Database from "better-sqlite3";
-import options from "../options";
-import IDataSource from "./interface";
+import options from "./options";
 import * as sqlite3 from "sqlite3";
 
-export default class SqliteDataSource implements IDataSource {
+class SqliteDataSource {
     private db?: sqlite.Database;
     private dbSync?: BetterSqlite3Database.Database;
 
@@ -231,3 +230,5 @@ export default class SqliteDataSource implements IDataSource {
         );
     }
 }
+
+export default new SqliteDataSource();
