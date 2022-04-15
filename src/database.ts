@@ -12,7 +12,7 @@ class SqliteDataSource {
         this.dbSync = new BetterSqlite3Database(database);
         this.db = await sqlite.open({
             filename: database,
-            driver: sqlite3.Database
+            driver: sqlite3.Database,
         });
         console.log(database + " opened");
     }
@@ -32,13 +32,13 @@ class SqliteDataSource {
                     "lastSignon INTEGER NOT NULL DEFAULT 0, " +
                     "lastStretch INTEGER NOT NULL, " +
                     "PRIMARY KEY (id, server) " +
-                ")",
+                    ")"
             ),
             this.db.exec(
                 "CREATE TABLE IF NOT EXISTS bans (" +
                     "id TEXT PRIMARY KEY UNIQUE NOT NULL, " +
                     "banned INTEGER NOT NULL DEFAULT 1" +
-                ")",
+                    ")"
             ),
         ]).then(() => console.log("tables created"));
     }
@@ -47,18 +47,14 @@ class SqliteDataSource {
         let row;
         if (!guild) {
             row = await this.db!.get(
-                "SELECT 1 " +
-                "FROM users " +
-                "WHERE id = ?",
-                user.id,
+                "SELECT 1 " + "FROM users " + "WHERE id = ?",
+                user.id
             );
         } else {
             row = await this.db!.get(
-                "SELECT 1 " +
-                "FROM users " +
-                "WHERE id = ? AND server = ?",
+                "SELECT 1 " + "FROM users " + "WHERE id = ? AND server = ?",
                 user.id,
-                guild.id,
+                guild.id
             );
         }
         if (row !== undefined) {
@@ -69,20 +65,16 @@ class SqliteDataSource {
 
     async update(user: discord.User, guild: discord.Guild) {
         return this.db!.run(
-            "INSERT OR IGNORE " +
-            "INTO users (id, server) " +
-            "VALUES (?, ?)",
+            "INSERT OR IGNORE " + "INTO users (id, server) " + "VALUES (?, ?)",
             user.id,
-            guild.id,
+            guild.id
         ).then(() => console.log(`${user.username} record updated`));
     }
 
     async banned(user: discord.User) {
         const row = await this.db!.get(
-            "SELECT banned = 1 " +
-            "FROM bans " +
-            "WHERE id = ?",
-            user.id,
+            "SELECT banned = 1 " + "FROM bans " + "WHERE id = ?",
+            user.id
         );
         if (row && row.banned === 1) {
             return true;
@@ -92,28 +84,20 @@ class SqliteDataSource {
 
     async ban(user: discord.User) {
         return this.db!.run(
-            "INSERT OR REPLACE " +
-            "INTO bans (id) " +
-            "VALUES (?)",
-            user.id,
+            "INSERT OR REPLACE " + "INTO bans (id) " + "VALUES (?)",
+            user.id
         );
     }
 
     async unban(user: discord.User) {
-        return this.db!.run(
-            "DELETE FROM bans " +
-            "WHERE id = ?",
-            user.id,
-        );
+        return this.db!.run("DELETE FROM bans " + "WHERE id = ?", user.id);
     }
 
     async balance(user: discord.User, server: discord.Guild) {
         const row = await this.db!.get(
-            "SELECT balance " +
-            "FROM users " +
-            "WHERE id = ? AND server = ?",
+            "SELECT balance " + "FROM users " + "WHERE id = ? AND server = ?",
             user.id,
-            server.id,
+            server.id
         );
         if (row && row.balance) {
             return row.balance;
@@ -124,14 +108,15 @@ class SqliteDataSource {
     async incrBalance(
         user: discord.User,
         server: discord.Guild,
-        amount: number) {
+        amount: number
+    ) {
         return this.db!.run(
             "UPDATE users " +
-            "SET balance = balance + ? " +
-            "WHERE id = ? AND server = ?",
+                "SET balance = balance + ? " +
+                "WHERE id = ? AND server = ?",
             amount,
             user.id,
-            server.id,
+            server.id
         ).then(() => {
             console.log(`${user.username}'s balance incremented by ${amount}`);
         });
@@ -141,15 +126,17 @@ class SqliteDataSource {
         source: discord.User,
         target: discord.User,
         server: discord.Guild,
-        amount: number) {
+        amount: number
+    ) {
         this.dbSync!.transaction(() => {
             this.dbSync!.prepare(
                 "UPDATE users " +
-                "SET balance = balance - :amount " +
-                "WHERE id = :source AND server = :server" + ";" +
-                "UPDATE users " +
-                "SET balance = balance + :amount " +
-                "WHERE id = :target AND server = :server",
+                    "SET balance = balance - :amount " +
+                    "WHERE id = :source AND server = :server" +
+                    ";" +
+                    "UPDATE users " +
+                    "SET balance = balance + :amount " +
+                    "WHERE id = :target AND server = :server"
             ).run({
                 amount,
                 server: server.id,
@@ -158,15 +145,15 @@ class SqliteDataSource {
             });
         });
         console.log(
-            `${amount} moved from ${source.username} to ${target.username}`,
+            `${amount} moved from ${source.username} to ${target.username}`
         );
     }
 
     async totalMoney(server: discord.Guild) {
         const row = await this.db!.get(
-            "SELECT SUM(balance) total " +
-            "FROM users " +
-            "WHERE server = ?", server.id);
+            "SELECT SUM(balance) total " + "FROM users " + "WHERE server = ?",
+            server.id
+        );
         if (row && row.total) {
             return row.total;
         }
@@ -176,10 +163,10 @@ class SqliteDataSource {
     async getLastSignon(user: discord.User, server: discord.Guild) {
         const row = await this.db!.get(
             "SELECT lastSignon " +
-            "FROM users " +
-            "WHERE id = ? AND server = ?",
+                "FROM users " +
+                "WHERE id = ? AND server = ?",
             user.id,
-            server.id,
+            server.id
         );
         if (row && row.lastSignon) {
             return new Date(row.lastSignon * 1000);
@@ -190,20 +177,20 @@ class SqliteDataSource {
     async setLastSignon(user: discord.User, server: discord.Guild) {
         return this.db!.run(
             "UPDATE users " +
-            "SET lastSignon = CAST(STRFTIME('%s', 'now') AS INTEGER) " +
-            "WHERE id = ? AND server = ?",
+                "SET lastSignon = CAST(STRFTIME('%s', 'now') AS INTEGER) " +
+                "WHERE id = ? AND server = ?",
             user.id,
-            server.id,
+            server.id
         ).then(() => console.log(`${user.username}'s signon time updated`));
     }
 
     async getLastInPrison(user: discord.User, server: discord.Guild) {
         const row = await this.db!.get(
             "SELECT lastStretch " +
-            "FROM users " +
-            "WHERE id = ? AND server = ?",
+                "FROM users " +
+                "WHERE id = ? AND server = ?",
             user.id,
-            server.id,
+            server.id
         );
         if (row && row.lastStretch) {
             return new Date(row.lastStretch * 1000);
@@ -214,19 +201,17 @@ class SqliteDataSource {
     async setLastInPrison(user: discord.User, server: discord.Guild) {
         return this.db!.run(
             "UPDATE users " +
-            "SET lastStretch = CAST(STRFTIME('%s', 'now') AS INTEGER) " +
-            "WHERE id = ? AND server = ?",
+                "SET lastStretch = CAST(STRFTIME('%s', 'now') AS INTEGER) " +
+                "WHERE id = ? AND server = ?",
             user.id,
-            server.id,
+            server.id
         ).then(() => console.log(`${user.username}'s prison time updated`));
     }
 
     async getPlayers(server: discord.Guild) {
         return this.db!.all(
-            "SELECT id, balance " +
-            "FROM users " +
-            "WHERE server = ?",
-            server.id,
+            "SELECT id, balance " + "FROM users " + "WHERE server = ?",
+            server.id
         );
     }
 }

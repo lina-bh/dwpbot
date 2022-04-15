@@ -20,9 +20,11 @@ token = token.replace("Bot ", "").trim();
 client.on("message", (message) => {
     const { author, channel, guild } = message;
     (async () => {
-        if (author.id === client.user.id ||
+        if (
+            author.id === client.user.id ||
             message.content[0] !== options.prefix ||
-            await db.banned(author)) {
+            (await db.banned(author))
+        ) {
             return;
         }
         await db.update(author, guild);
@@ -46,10 +48,9 @@ client.on("message", (message) => {
     });
 });
 
-db
-    .init()
+db.init()
     .then(() => client.login("Bot " + token))
     .catch((err) => {
-    console.error(err);
-    process.exit(1);
-});
+        console.error(err);
+        process.exit(1);
+    });
