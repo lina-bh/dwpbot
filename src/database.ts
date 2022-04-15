@@ -41,12 +41,12 @@ class SqliteDataSource {
         let row;
         if (!guild) {
             row = await this.db.get(
-                "SELECT 1 " + "FROM users " + "WHERE id = ?",
+                "SELECT 1 FROM users WHERE id = ?",
                 user.id
             );
         } else {
             row = await this.db.get(
-                "SELECT 1 " + "FROM users " + "WHERE id = ? AND server = ?",
+                "SELECT 1 FROM users WHERE id = ? AND server = ?",
                 user.id,
                 guild.id
             );
@@ -68,7 +68,7 @@ class SqliteDataSource {
 
     async banned(user: discord.User) {
         const row = await this.db.get(
-            "SELECT banned = 1 " + "FROM bans " + "WHERE id = ?",
+            "SELECT banned = 1 FROM bans WHERE id = ?",
             user.id
         );
         if (row && row.banned === 1) {
@@ -79,13 +79,13 @@ class SqliteDataSource {
 
     async ban(user: discord.User) {
         await this.db.run(
-            "INSERT OR REPLACE " + "INTO bans (id) " + "VALUES (?)",
+            "INSERT OR REPLACE INTO bans (id) VALUES (?)",
             user.id
         );
     }
 
     async unban(user: discord.User) {
-        await this.db.run("DELETE FROM bans " + "WHERE id = ?", user.id);
+        await this.db.run("DELETE FROM bans WHERE id = ?", user.id);
     }
 
     async balance(user: discord.User, server: discord.Guild) {
