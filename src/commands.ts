@@ -4,7 +4,6 @@ import addMinutes from "date-fns/add_minutes";
 import db from "./database";
 import distanceInWordsToNow from "date-fns/distance_in_words_to_now";
 import options from "./options";
-import * as logger from "winston";
 import {cantSignon, inPrison, flip} from "./game";
 
 const commands = new Map<string, (message: discord.Message) => Promise<any>>();
@@ -25,7 +24,7 @@ commands.set("signon", async function signon(message) {
     await db.incrBalance(user, server, payment);
     await db.setLastSignon(user, server);
     const balance = await db.balance(user, server);
-    logger.info(`${user.tag} claimed £${payment}`);
+    console.log(`${user.tag} claimed £${payment}`);
     return channel.send(
         `${user} £${payment} bennies paid into your account. ` +
         `your balance is now £${balance}`,
@@ -53,7 +52,7 @@ commands.set("bet", async function bet(message) {
     const won = Math.random() >= 0.5;
     if (won) {
         await db.incrBalance(user, server, bet);
-        logger.info(`${user.tag} won £${bet}`);
+        console.log(`${user.tag} won £${bet}`);
         return channel.send(
             `${user} you won £${bet}! drinks on you ` +
             `(your balance is now £${balance + bet})`,
@@ -61,7 +60,7 @@ commands.set("bet", async function bet(message) {
     } else {
         const loss = _.random(1, bet);
         await db.incrBalance(user, server, -loss);
-        logger.info(`${user.tag} lost £${loss}`);
+        console.log(`${user.tag} lost £${loss}`);
         return channel.send(
             `${user} you lost £${loss}. don't let the mrs hear` +
             ` (your balance is now £${balance - loss})`,
@@ -117,7 +116,7 @@ async function mug(message: discord.Message) {
     const success = Math.random() <= vBalance / await db.totalMoney(server);
     if (!success) {
         await db.setLastInPrison(user, server);
-        logger.info(`${user.tag} was caught`);
+        console.log(`${user.tag} was caught`);
         return channel.send(
             `${user} you were caught by a bastard copper! ` +
             `that's ${options.prisonMinutes} minutes inside for you`,
@@ -126,7 +125,7 @@ async function mug(message: discord.Message) {
 
     const takings = _.random(1, vBalance);
     await db.moveMoney(victim, user, server, takings);
-    logger.info(`${user.tag} mugged £${takings} off ${victim.tag}`);
+    console.log(`${user.tag} mugged £${takings} off ${victim.tag}`);
     return channel.send(
         `${user} you successfully nicked £${takings} off ${victim}`,
     );
@@ -284,7 +283,7 @@ async function give(message: discord.Message) {
         return channel.send(`${author} you don't have the money for that`);
     }
     await db.moveMoney(author, target, server, gift);
-    logger.info(`${author.tag} gave £${gift} to £${target.tag}`);
+    console.log(`${author.tag} gave £${gift} to £${target.tag}`);
     return channel.send(`${author} you gave £${gift} to ${target}`);
 }
 commands.set("give", give);

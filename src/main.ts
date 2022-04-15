@@ -4,7 +4,6 @@ import client from "./client";
 import commands from "./commands";
 import db from "./database";
 import options from "./options";
-import * as logger from "winston";
 
 let token;
 if (options.tokenEnv in process.env) {
@@ -38,7 +37,7 @@ client.on("message", (message) => {
         }
         return impl(message);
     })().catch(async (err) => {
-        logger.error(err);
+        console.error(err);
         if (author.id !== options.adminId) {
             const admin = await client.fetchUser(options.adminId);
             admin.sendMessage("error: ```json\n" + JSON.stringify(err) + "```");
@@ -46,13 +45,6 @@ client.on("message", (message) => {
         return channel.send(author + " sorry, i fucked up somewhere");
     });
 });
-
-logger.remove(logger.transports.Console);
-logger.add(logger.transports.Console, {
-    colorize: true,
-    timestamp: true,
-});
-(logger as any).level = "silly";
 
 db
     .init()

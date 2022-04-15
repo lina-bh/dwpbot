@@ -1,6 +1,5 @@
 "use strict";
 import * as discord from "discord.js";
-import * as logger from "winston";
 // import options from "./options.json";
 
 const client = new discord.Client({
@@ -12,7 +11,7 @@ const client = new discord.Client({
 export default client;
 
 client.on("ready", () => {
-    logger.info("Ready.");
+    console.log("Ready.");
 });
 
 client.on("error", (err) => {

@@ -3,7 +3,6 @@ import * as discord from "discord.js";
 import BetterSqlite3Database from "better-sqlite3";
 import options from "../options";
 import IDataSource from "./interface";
-import * as logger from "winston";
 import * as sqlite3 from "sqlite3";
 
 export default class SqliteDataSource implements IDataSource {
@@ -16,7 +15,7 @@ export default class SqliteDataSource implements IDataSource {
             filename: database,
             driver: sqlite3.Database
         });
-        logger.verbose(database + " opened");
+        console.log(database + " opened");
     }
 
     async init(database = options.database) {
@@ -42,7 +41,7 @@ export default class SqliteDataSource implements IDataSource {
                     "banned INTEGER NOT NULL DEFAULT 1" +
                 ")",
             ),
-        ]).then(() => logger.silly("tables created"));
+        ]).then(() => console.log("tables created"));
     }
 
     async exists(user: discord.User, guild?: discord.Guild): Promise<boolean> {
@@ -76,7 +75,7 @@ export default class SqliteDataSource implements IDataSource {
             "VALUES (?, ?)",
             user.id,
             guild.id,
-        ).then(() => logger.silly(`${user.username} record updated`));
+        ).then(() => console.log(`${user.username} record updated`));
     }
 
     async banned(user: discord.User) {
@@ -135,7 +134,7 @@ export default class SqliteDataSource implements IDataSource {
             user.id,
             server.id,
         ).then(() => {
-            logger.silly(`${user.username}'s balance incremented by ${amount}`);
+            console.log(`${user.username}'s balance incremented by ${amount}`);
         });
     }
 
@@ -159,7 +158,7 @@ export default class SqliteDataSource implements IDataSource {
                 target: target.id,
             });
         });
-        logger.silly(
+        console.log(
             `${amount} moved from ${source.username} to ${target.username}`,
         );
     }
@@ -196,7 +195,7 @@ export default class SqliteDataSource implements IDataSource {
             "WHERE id = ? AND server = ?",
             user.id,
             server.id,
-        ).then(() => logger.silly(`${user.username}'s signon time updated`));
+        ).then(() => console.log(`${user.username}'s signon time updated`));
     }
 
     async getLastInPrison(user: discord.User, server: discord.Guild) {
@@ -220,7 +219,7 @@ export default class SqliteDataSource implements IDataSource {
             "WHERE id = ? AND server = ?",
             user.id,
             server.id,
-        ).then(() => logger.silly(`${user.username}'s prison time updated`));
+        ).then(() => console.log(`${user.username}'s prison time updated`));
     }
 
     async getPlayers(server: discord.Guild) {
