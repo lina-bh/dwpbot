@@ -1,30 +1,21 @@
 # dwpbot
-dwpbot is a Discord bot where you claim bennies, bet and mug other users. 
-It goes without saying this is just a joke, a fun bot.
+
+dwpbot is a Discord bot that gamifies the tragic, tortured existence of the Universal Credit service user.
 
 ## Run
+
+```sh
+git clone https://github.com/lina-bh/dwpbot
 ```
-git clone https://github.com/flatulation/dwpbot
-```
-Using yarn:
-```
-yarn
-yarn build
-yarn start
+
+dwpbot either reads your bot user token from `$DWPBOT_TOKEN` or from `token` in the project root.
+Using pnpm:
+
+```sh
+pnpm i # with -P if you want
+pnpm start
 ```
 
 ## Licence
-Copyright (C) 2018 flatulation
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+Copyright (C) 2018-2022 lina-bh (fka flatulation). All past and present versions are retroactively available under the WTFPL 2.0: see [./LICENSE](LICENSE).
