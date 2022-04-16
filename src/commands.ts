@@ -27,7 +27,7 @@ commands.set("signon", async function signon(message) {
     await db.incrBalance(author, guild, payment);
     await db.setLastSignon(author, guild);
     const balance = await db.balance(author, guild);
-    console.log(`${author.tag} claimed £${payment}`);
+    console.error(`${author.tag} claimed £${payment}`);
     return channel.send(
         `${author} £${payment} bennies paid into your account. your balance is now £${balance}`
     );
@@ -55,7 +55,7 @@ commands.set("bet", async function bet(message) {
     const won = Math.random() >= 0.5;
     if (won) {
         await db.incrBalance(author, guild, bet);
-        console.log(`${author.tag} won £${bet}`);
+        console.error(`${author.tag} won £${bet}`);
         balance = await db.balance(author, guild);
         return channel.send(
             `${author} you won £${bet}! drinks on you (your balance is now £${balance})`
@@ -63,7 +63,7 @@ commands.set("bet", async function bet(message) {
     } else {
         const loss = _.random(1, bet);
         await db.incrBalance(author, guild, -loss);
-        console.log(`${author.tag} lost £${loss}`);
+        console.error(`${author.tag} lost £${loss}`);
         balance = await db.balance(author, guild);
         return channel.send(
             `${author} you lost £${loss}. don't let the mrs hear (your balance is now £${balance})`
@@ -73,7 +73,7 @@ commands.set("bet", async function bet(message) {
 
 async function balance(message: discord.Message) {
     const { author, channel, guild } = message;
-    const mugs = message.mentions.users.array();
+    const mugs = Array.from(message.mentions.users.values());
 
     if (mugs.length < 1) {
         const balance = await db.balance(author, guild);
@@ -83,9 +83,7 @@ async function balance(message: discord.Message) {
     return Promise.all(
         mugs.map(async (mug) => {
             const balance = await db.balance(mug, guild);
-            return channel.sendMessage(
-                `${author} ${mug}'s balance is £${balance}`
-            );
+            return channel.send(`${author} ${mug}'s balance is £${balance}`);
         })
     );
 }
@@ -102,7 +100,7 @@ commands.set("mug", async function mug(message: discord.Message) {
         return channel.send(`${author} you're still inside for ${when}`);
     }
 
-    const victims = message.mentions.users.array();
+    const victims = Array.from(message.mentions.users.values());
     if (victims.length < 1) {
         return channel.send(`${author} whom to mug?`);
     } else if (victims.length > 1) {
@@ -121,7 +119,7 @@ commands.set("mug", async function mug(message: discord.Message) {
     const success = Math.random() <= victimBal / (await db.totalMoney(guild));
     if (!success) {
         await db.setLastInPrison(author, guild);
-        console.log(`${author.tag} was caught`);
+        console.error(`${author.tag} was caught`);
         return channel.send(
             `${author} you're nicked! that's ${options.prisonMinutes} minutes inside for you`
         );
@@ -129,7 +127,7 @@ commands.set("mug", async function mug(message: discord.Message) {
 
     const takings = _.random(1, victimBal);
     await db.moveMoney(victim, author, guild, takings);
-    console.log(`${author.tag} mugged £${takings} off ${victim.tag}`);
+    console.error(`${author.tag} mugged £${takings} off ${victim.tag}`);
     return channel.send(
         `${author} you successfully nicked £${takings} off ${victim}`
     );
@@ -163,7 +161,7 @@ commands.set("players", async function players(message: discord.Message) {
     const players = (await db.getPlayers(server))
         .map((player) => {
             try {
-                const user = server.members.get(player.id);
+                const user = server.members.cache.get(player.id);
                 player.name = user.nickname || user.user.username;
                 return player;
             } catch (ex) {
@@ -264,7 +262,7 @@ export function bans(message) {
 */
 commands.set("give", async function give(message: discord.Message) {
     const { channel, author, guild } = message;
-    const menchies = message.mentions.users.array();
+    const menchies = Array.from(message.mentions.users.values());
     if (menchies.length < 1) {
         return channel.send(`${author} give to whom?`);
     } else if (menchies.length > 1) {
@@ -285,7 +283,7 @@ commands.set("give", async function give(message: discord.Message) {
         return channel.send(`${author} you don't have the money for that`);
     }
     await db.moveMoney(author, target, guild, gift);
-    console.log(`${author.tag} gave £${gift} to £${target.tag}`);
+    console.error(`${author.tag} gave £${gift} to £${target.tag}`);
     return channel.send(`${author} you gave £${gift} to ${target}`);
 });
 

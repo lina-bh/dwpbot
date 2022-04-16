@@ -13,7 +13,7 @@ class SqliteDataSource {
             filename: database,
             driver: sqlite3.Database,
         });
-        console.log(database + " opened");
+        console.error(database + " opened");
 
         await this.db.exec(
             `CREATE TABLE 
@@ -34,7 +34,7 @@ class SqliteDataSource {
                 ")"
         );
 
-        console.log("tables created");
+        console.error("tables created");
     }
 
     async exists(user: discord.User, guild?: discord.Guild): Promise<boolean> {
@@ -63,7 +63,7 @@ class SqliteDataSource {
             user.id,
             guild.id
         );
-        // console.log(`${user.username} record updated`);
+        // console.error(`${user.username} record updated`);
     }
 
     async banned(user: discord.User) {
@@ -111,7 +111,7 @@ class SqliteDataSource {
             user.id,
             server.id
         );
-        console.log(`${user.username}'s balance incremented by ${amount}`);
+        console.error(`${user.username}'s balance incremented by ${amount}`);
     }
 
     async moveMoney(
@@ -132,7 +132,7 @@ class SqliteDataSource {
             target,
             server
         );
-        console.log(
+        console.error(
             `${amount} moved from ${source.username} to ${target.username}`
         );
     }
@@ -166,7 +166,7 @@ class SqliteDataSource {
             user.id,
             server.id
         );
-        console.log(`${user.username}'s signon time updated`);
+        console.error(`${user.username}'s signon time updated`);
     }
 
     async getLastInPrison(user: discord.User, server: discord.Guild) {
@@ -187,7 +187,7 @@ class SqliteDataSource {
             user.id,
             server.id
         );
-        console.log(`${user.username}'s prison time updated`);
+        console.error(`${user.username}'s prison time updated`);
     }
 
     async getPlayers(server: discord.Guild) {
