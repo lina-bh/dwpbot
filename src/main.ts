@@ -19,16 +19,17 @@ if (options.tokenEnv in process.env) {
 token = token.replace("Bot ", "").trim();
 
 const client = new discord.Client({
-    // intents: 3072,
+    intents:
+        discord.Intents.FLAGS.GUILD_MESSAGES | discord.Intents.FLAGS.GUILDS,
+    partials: ["MESSAGE", "USER", "CHANNEL", "GUILD_MEMBER"],
     // commandPrefix: options.prefix,
     // nonCommandEditable: false,
     // owner: options.adminId,
     // unknownCommandResponse: false,
 });
-export default client;
 
 client.on("ready", () => {
-    console.log("Ready.");
+    console.error("Ready.");
 });
 
 client.on("error", (err) => {
@@ -36,7 +37,10 @@ client.on("error", (err) => {
     process.exit(1);
 });
 
-client.on("message", async (message) => {
+client.on("warn", console.error);
+client.on("debug", console.error);
+
+client.on("messageCreate", async (message) => {
     const { author, channel, guild } = message;
     try {
         if (
@@ -56,14 +60,14 @@ client.on("message", async (message) => {
         if (!impl) {
             return;
         }
-        return impl(message);
+        impl(message);
     } catch (err) {
         console.error(err);
         // if (author.id !== options.adminId) {
         //     const admin = await client.fetchUser(options.adminId);
         //     admin.sendMessage("error: ```json\n" + JSON.stringify(err) + "```");
         // }
-        return channel.send(author + " sorry, i fucked up somewhere");
+        await channel.send(author + " sorry, i fucked up somewhere");
     }
 });
 
