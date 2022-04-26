@@ -1,35 +1,47 @@
 import * as discord from "discord.js";
-import _ from "lodash";
 import { addMinutes, distanceInWordsToNow } from "date-fns";
 
-import db from "./database";
-import options from "./options";
-import { cantSignon, inPrison } from "./game";
+import {
+    loadBalance,
+    loadGuildPlayers,
+    loadLastPrison,
+    loadLastSignon,
+    touchUserRecord,
+} from "./database";
+import {
+    cantSignon,
+    commitMugging,
+    inPrison,
+    makeBet,
+    payBennies,
+    PRISON_PERIOD,
+    sendGift,
+    SIGNON_PERIOD,
+} from "./game";
 
 const commands = new Map<
     string,
-    (message: discord.Message) => Promise<unknown>
+    (
+        message: discord.Message
+    ) => Promise<discord.Message | discord.Message[] | undefined>
 >();
 export default commands;
 
 commands.set("signon", async function signon(message) {
     const { author, guild, channel } = message;
 
-    if (await cantSignon(author, guild)) {
-        const lastSignon = await db.getLastSignon(author, guild);
+    if (await cantSignon(author.id, guild.id)) {
+        const lastSignon = await loadLastSignon(author.id, guild.id);
         const when = distanceInWordsToNow(
-            addMinutes(lastSignon, options.signonMinutes)
+            addMinutes(lastSignon, SIGNON_PERIOD)
         );
         return channel.send(`${author} your next payment is in ${when}`);
     }
 
-    const payment = _.random(options.lowerBennies, options.upperBennies);
-    await db.incrBalance(author, guild, payment);
-    await db.setLastSignon(author, guild);
-    const balance = await db.balance(author, guild);
-    console.error(`${author.tag} claimed £${payment}`);
+    const amt = await payBennies(author.id, guild.id);
+    const bal = await loadBalance(author.id, guild.id);
     return channel.send(
-        `${author} £${payment} bennies paid into your account. your balance is now £${balance}`
+        `${author} £${amt} bennies paid into your account. your balance is now £${bal}`
     );
 });
 
@@ -37,36 +49,26 @@ commands.set("bet", async function bet(message) {
     const { author, channel, guild } = message;
     const args = message.content.slice(1).split(" ");
 
-    const bet = parseInt(args[1], 10);
+    const bet = Math.round(parseInt(args[1], 10));
     if (bet <= 0 || Number.isNaN(bet)) {
         return channel.send(
             `${author} try putting coins in the machine next time mate`
         );
     }
 
-    // throw new Error("not implemented yet");
-    let balance = await db.balance(author, guild);
-    if (bet > balance) {
+    const gains = await makeBet(author.id, guild.id, bet);
+    const bal = await loadBalance(author.id, guild.id);
+    if (gains > 0) {
         return channel.send(
-            `${author} https://www.begambleaware.org: when the fun stops, stop`
+            `${author} you won £${gains}! drinks on you (your balance is now £${bal})`
         );
-    }
-
-    const won = Math.random() >= 0.5;
-    if (won) {
-        await db.incrBalance(author, guild, bet);
-        console.error(`${author.tag} won £${bet}`);
-        balance = await db.balance(author, guild);
+    } else if (gains < 0) {
         return channel.send(
-            `${author} you won £${bet}! drinks on you (your balance is now £${balance})`
+            `${author} you lost £${gains}. don't let the mrs hear (your balance is now £${bal})`
         );
     } else {
-        const loss = _.random(1, bet);
-        await db.incrBalance(author, guild, -loss);
-        console.error(`${author.tag} lost £${loss}`);
-        balance = await db.balance(author, guild);
         return channel.send(
-            `${author} you lost £${loss}. don't let the mrs hear (your balance is now £${balance})`
+            `${author} https://www.begambleaware.org: when the fun stops, stop`
         );
     }
 });
@@ -76,13 +78,13 @@ async function balance(message: discord.Message) {
     const mugs = Array.from(message.mentions.users.values());
 
     if (mugs.length < 1) {
-        const balance = await db.balance(author, guild);
+        const balance = await loadBalance(author.id, guild.id);
         return channel.send(`${author} your balance is £${balance}`);
     }
 
     return Promise.all(
         mugs.map(async (mug) => {
-            const balance = await db.balance(mug, guild);
+            const balance = await loadBalance(mug.id, guild.id);
             return channel.send(`${author} ${mug}'s balance is £${balance}`);
         })
     );
@@ -92,10 +94,10 @@ commands.set("balance", balance).set("bal", balance);
 commands.set("mug", async function mug(message: discord.Message) {
     const { author, channel, guild } = message;
 
-    if (await inPrison(author, guild)) {
-        const lastInPrison = await db.getLastInPrison(author, guild);
+    if (await inPrison(author.id, guild.id)) {
+        const lastInPrison = await loadLastPrison(author.id, guild.id);
         const when = distanceInWordsToNow(
-            addMinutes(lastInPrison, options.prisonMinutes)
+            addMinutes(lastInPrison, PRISON_PERIOD)
         );
         return channel.send(`${author} you're still inside for ${when}`);
     }
@@ -111,54 +113,51 @@ commands.set("mug", async function mug(message: discord.Message) {
         return channel.send(`${author} you can't mug yourself`);
     }
 
-    const victimBal = await db.balance(victim, guild);
-    if (victimBal === 0) {
-        return channel.send(`${author} they have NOTHING`);
+    const result = await commitMugging(author.id, victim.id, guild.id);
+    switch (result) {
+        case 0:
+            return channel.send(`${author} they have NOTHING`);
+        case -1:
+            return channel.send(
+                `${author} you're nicked! that's ${PRISON_PERIOD} minutes inside for you`
+            );
+        default:
+            return channel.send(
+                `${author} you successfully nicked £${result} off ${victim}`
+            );
     }
-
-    const success = Math.random() <= victimBal / (await db.totalMoney(guild));
-    if (!success) {
-        await db.setLastInPrison(author, guild);
-        console.error(`${author.tag} was caught`);
-        return channel.send(
-            `${author} you're nicked! that's ${options.prisonMinutes} minutes inside for you`
-        );
-    }
-
-    const takings = _.random(1, victimBal);
-    await db.moveMoney(victim, author, guild, takings);
-    console.error(`${author.tag} mugged £${takings} off ${victim.tag}`);
-    return channel.send(
-        `${author} you successfully nicked £${takings} off ${victim}`
-    );
 });
 
-/*
-export function whois(message) {
-    const { channel, author } = message;
-    const args = message.content.slice(1).split(" ");
-
-    if (args.length < 2) {
-        channel.send(`${author} who?`);
-        return;
+commands.set("give", async function give(message: discord.Message) {
+    const { channel, author, guild } = message;
+    const menchies = Array.from(message.mentions.users.values());
+    if (menchies.length < 1) {
+        return channel.send(`${author} give to whom?`);
+    } else if (menchies.length > 1) {
+        return channel.send(`${author} only one at a time`);
     }
-    const id = args[1];
+    const target = menchies[0];
+    await touchUserRecord(target.id, guild.id);
 
-    if (client.users.has(id)) {
-        channel.send(client.users.get(id)!.username);
-    } else {
-        client.fetchUser(id).then((user) => {
-            channel.send(`${user.username}`);
-        }).catch((err) => {
-            channel.send(err);
-        });
+    const match = message.cleanContent.match(/\b\d\b/);
+    if (!match) {
+        return channel.send(`${author} give something you heartless bastard`);
     }
-};
-*/
+
+    const gift = Math.round(parseInt(match[0], 10));
+    if (gift <= 0 || Number.isNaN(gift)) {
+        return channel.send(`${author} give something you heartless bastard`);
+    }
+
+    if (!(await sendGift(author.id, target.id, guild.id, gift))) {
+        return channel.send(`${author} you don't have the money for that`);
+    }
+    return channel.send(`${author} you gave £${gift} to ${target}`);
+});
 
 commands.set("players", async function players(message: discord.Message) {
     const { channel, guild: server } = message;
-    const players = (await db.getPlayers(server))
+    const players = (await loadGuildPlayers(server.id))
         .map((player) => {
             try {
                 const user = server.members.cache.get(player.id);
@@ -178,15 +177,6 @@ commands.set("players", async function players(message: discord.Message) {
     return channel.send(buf);
 });
 
-async function raise(message: discord.Message) {
-    if (message.author.id !== options.adminId) {
-        return;
-    }
-    const exMessage = message.content.split(" ")[1];
-    throw new Error(exMessage);
-}
-commands.set("throw", raise);
-
 /*
 export function ban(message) {
     const { author, channel } = message;
@@ -205,20 +195,6 @@ export function ban(message) {
     for (const mug of mugs) {
         db.ban(mug);
         channel.send(`${mug} you are fucking BANNED`);
-    }
-};
-
-export function _throw(message) {
-    const { channel } = message;
-    if (message.author.id !== options.adminId) {
-        channel.send(message.author + " fuck off");
-        return;
-    }
-    const args = message.content.slice(1).split(" ");
-    if (args.length < 2) {
-        throw new Error("thrown by admin");
-    } else {
-        throw new Error(args.slice(1).join(" "));
     }
 };
 
@@ -260,32 +236,6 @@ export function bans(message) {
     channel.send("```" + bans.join("\n") + "```");
 };
 */
-commands.set("give", async function give(message: discord.Message) {
-    const { channel, author, guild } = message;
-    const menchies = Array.from(message.mentions.users.values());
-    if (menchies.length < 1) {
-        return channel.send(`${author} give to whom?`);
-    } else if (menchies.length > 1) {
-        return channel.send(`${author} only one at a time`);
-    }
-    const target = menchies[0];
-    await db.update(target, guild);
-
-    const match = message.cleanContent.match(/\b\d\b/);
-    if (!match) {
-        return channel.send(`${author} give something you heartless bastard`);
-    }
-    const gift = parseInt(match[0], 10);
-    if (gift <= 0 || Number.isNaN(gift)) {
-        return channel.send(`${author} give something you heartless bastard`);
-    }
-    if (gift > (await db.balance(author, guild))) {
-        return channel.send(`${author} you don't have the money for that`);
-    }
-    await db.moveMoney(author, target, guild, gift);
-    console.error(`${author.tag} gave £${gift} to £${target.tag}`);
-    return channel.send(`${author} you gave £${gift} to ${target}`);
-});
 
 /*
 export function help(message) {
