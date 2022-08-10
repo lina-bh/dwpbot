@@ -1,5 +1,5 @@
 import { differenceInMinutes } from "date-fns";
-import { random } from "lodash";
+import { random } from "lodash-es";
 
 import {
     addBalance,
@@ -9,12 +9,19 @@ import {
     loadGuildTotal,
     loadLastSignon,
     loadLastPrison,
-} from "./database";
+} from "./database.js";
 
 const LOWER_BENE = 10;
 const UPPER_BENE = 100;
 export const SIGNON_PERIOD = 30;
 export const PRISON_PERIOD = 10;
+
+const betRateLimit = new Map<
+    [string, string],
+    { since: Date; times: number }
+>();
+
+function canBet(userId: string, guildId: string) {}
 
 export async function cantSignon(
     userId: string,
@@ -64,7 +71,7 @@ export async function makeBet(
 
     const loss = random(1, bet);
     await addBalance(userId, guildId, -loss);
-    return loss;
+    return -loss;
 }
 
 export async function commitMugging(
@@ -87,6 +94,7 @@ export async function commitMugging(
     const takings = random(1, victimBal);
     await addBalance(userId, guildId, takings);
     await addBalance(victimId, guildId, -takings);
+    return takings;
 }
 
 export async function sendGift(

@@ -1,13 +1,17 @@
 import * as discord from "discord.js";
-import { addMinutes, distanceInWordsToNow } from "date-fns";
+import {
+    addMinutes,
+    formatDistanceToNow as distanceInWordsToNow,
+} from "date-fns";
 
 import {
     loadBalance,
     loadGuildPlayers,
     loadLastPrison,
     loadLastSignon,
+    Player,
     touchUserRecord,
-} from "./database";
+} from "./database.js";
 import {
     cantSignon,
     commitMugging,
@@ -17,12 +21,13 @@ import {
     PRISON_PERIOD,
     sendGift,
     SIGNON_PERIOD,
-} from "./game";
+} from "./game.js";
 
 const commands = new Map<
     string,
     (
-        message: discord.Message
+        message: discord.Message,
+        player?: Player
     ) => Promise<discord.Message | discord.Message[] | undefined>
 >();
 export default commands;
@@ -40,6 +45,7 @@ commands.set("signon", async function signon(message) {
 
     const amt = await payBennies(author.id, guild.id);
     const bal = await loadBalance(author.id, guild.id);
+    console.error(`${guild.name}: ${author.tag} paid £${amt}`);
     return channel.send(
         `${author} £${amt} bennies paid into your account. your balance is now £${bal}`
     );
@@ -59,12 +65,14 @@ commands.set("bet", async function bet(message) {
     const gains = await makeBet(author.id, guild.id, bet);
     const bal = await loadBalance(author.id, guild.id);
     if (gains > 0) {
+        console.error(`${guild.name}: ${author.tag} won £${gains}`);
         return channel.send(
             `${author} you won £${gains}! drinks on you (your balance is now £${bal})`
         );
     } else if (gains < 0) {
+        console.error(`${guild.name}: ${author.tag} lost £${-gains}`);
         return channel.send(
-            `${author} you lost £${gains}. don't let the mrs hear (your balance is now £${bal})`
+            `${author} you lost £${-gains}. don't let the mrs hear (your balance is now £${bal})`
         );
     } else {
         return channel.send(
@@ -118,10 +126,14 @@ commands.set("mug", async function mug(message: discord.Message) {
         case 0:
             return channel.send(`${author} they have NOTHING`);
         case -1:
+            console.error(`${guild.name}: ${author.tag} jailed`);
             return channel.send(
                 `${author} you're nicked! that's ${PRISON_PERIOD} minutes inside for you`
             );
         default:
+            console.error(
+                `${guild.name}: ${author.tag} nicked ${result} off ${victim.tag}`
+            );
             return channel.send(
                 `${author} you successfully nicked £${result} off ${victim}`
             );
@@ -152,6 +164,7 @@ commands.set("give", async function give(message: discord.Message) {
     if (!(await sendGift(author.id, target.id, guild.id, gift))) {
         return channel.send(`${author} you don't have the money for that`);
     }
+    console.error(`${guild.name}: ${author.tag} gave ${target.tag} £${gift}`);
     return channel.send(`${author} you gave £${gift} to ${target}`);
 });
 

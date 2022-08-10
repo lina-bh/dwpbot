@@ -1,7 +1,7 @@
 import { Client, Intents, Message } from "discord.js";
 
-import commands from "./commands";
-import { isBanned, touchUserRecord } from "./database";
+import commands from "./commands.js";
+import { isBanned, touchUserRecord } from "./database.js";
 
 let client: Client;
 
@@ -34,9 +34,9 @@ async function handleMessage(message: Message) {
 export async function startClient(
     token: string,
     debug: boolean
-): Promise<void> {
+): Promise<Client<boolean>> {
     if (client) {
-        return;
+        return client;
     }
     client = new Client({
         intents: Intents.FLAGS.GUILD_MESSAGES | Intents.FLAGS.GUILDS,
@@ -49,7 +49,9 @@ export async function startClient(
     }
     client.on("messageCreate", handleMessage);
     await client.login("Bot " + token);
-    return new Promise((resolve) => {
-        client.once("ready", () => resolve());
-    });
+    return client;
+}
+
+export function fetchUser(userId: string) {
+    return client.users.fetch(userId);
 }

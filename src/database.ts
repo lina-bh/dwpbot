@@ -1,14 +1,11 @@
 import * as sqlite from "sqlite";
-import * as sqlite3 from "sqlite3";
+import sqlite3 from "sqlite3";
 
-let db: sqlite.Database;
+const db = await openDB("./dwpbot.db");
 
-export async function openDB(filename: string): Promise<void> {
-    if (db) {
-        return;
-    }
-    db = await sqlite.open({ filename, driver: sqlite3.Database });
-    await db.exec(
+async function openDB(filename: string): Promise<sqlite.Database> {
+    const db = await sqlite.open({ filename, driver: sqlite3.Database });
+    await db.run(
         `CREATE TABLE IF NOT EXISTS 
         users (
             id TEXT NOT NULL, 
@@ -19,7 +16,7 @@ export async function openDB(filename: string): Promise<void> {
             PRIMARY KEY (id, server)
         )`
     );
-    await db.exec(
+    await db.run(
         `CREATE TABLE IF NOT EXISTS 
         bans (
             id TEXT PRIMARY KEY UNIQUE NOT NULL, 
@@ -27,14 +24,19 @@ export async function openDB(filename: string): Promise<void> {
         )`
     );
     console.error(`sqlite database ${filename} opened`);
+    return db;
 }
 
 export async function touchUserRecord(userId: string, guildId: string) {
-    await db.exec(
-        "INSERT OR IGNORE INTO users (id, server) values (?, ?)",
+    const res = await db.run(
+        "INSERT OR IGNORE INTO users (id, server) VALUES (?, ?)",
         userId,
         guildId
     );
+    if (res.changes === 1) {
+        return true;
+    }
+    return false;
 }
 
 export async function isBanned(userId: string): Promise<boolean> {
@@ -44,9 +46,9 @@ export async function isBanned(userId: string): Promise<boolean> {
 
 export async function storeUserBan(userId: string, banned: boolean) {
     if (banned) {
-        await db.exec("INSERT OR REPLACE INTO bans (id) VALUES (?)", userId);
+        await db.run("INSERT OR REPLACE INTO bans (id) VALUES (?)", userId);
     } else {
-        await db.exec("DELETE FROM bans WHERE id = ?", userId);
+        await db.run("DELETE FROM bans WHERE id = ?", userId);
     }
 }
 
@@ -101,7 +103,7 @@ export async function storeLastSignon(
     d: Date
 ) {
     const ts = Math.floor(d.getTime() / 1000);
-    await db.exec(
+    await db.run(
         "UPDATE users SET lastSignon = ? WHERE id = ? AND server = ?",
         ts,
         userId,
@@ -127,7 +129,7 @@ export async function storeLastPrison(
     d: Date
 ) {
     const ts = Math.floor(d.getTime() / 1000);
-    await db.exec(
+    await db.run(
         "UPDATE users SET lastStretch = ? WHERE id = ? AND server = ?",
         ts,
         userId,
@@ -145,4 +147,49 @@ export async function loadGuildPlayers(guildId: string) {
         balance: row.balance,
         name: undefined,
     }));
+}
+
+export type Player = {
+    balance: {
+        load(): Promise<number>;
+        add(number): Promise<void>;
+    };
+    signon: {
+        load(): Promise<Date>;
+        update(): Promise<void>;
+    };
+    prison: {
+        load(): Promise<Date>;
+        update(): Promise<void>;
+    };
+};
+
+async function loadPlayer(userId: string, guildId: string): Promise<Player> {
+    await touchUserRecord(userId, guildId);
+    return {
+        balance: {
+            load() {
+                return loadBalance(userId, guildId);
+            },
+            add(amt) {
+                return addBalance(userId, guildId, amt);
+            },
+        },
+        signon: {
+            load() {
+                return loadLastSignon(userId, guildId);
+            },
+            update() {
+                return storeLastSignon(userId, guildId, new Date());
+            },
+        },
+        prison: {
+            load() {
+                return loadLastPrison(userId, guildId);
+            },
+            update() {
+                return storeLastPrison(userId, guildId, new Date());
+            },
+        },
+    };
 }

@@ -2,8 +2,8 @@
     "compilerOptions": {
         /* Basic Options */
         "target": "es2022",
-        "module": "commonjs",
-        "lib": ["es2022"],
+        "module": "NodeNext",
+        "lib": ["ES2022"],
         // "declaration": true,                   /* Generates corresponding '.d.ts' file. */
         "sourceMap": true /* Generates corresponding '.map' file. */,
         "outDir": "./build" /* Redirect output structure to the directory. */,

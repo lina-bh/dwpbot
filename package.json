@@ -3,27 +3,34 @@
     "version": "2.0.0",
     "description": "Benefit-claiming Discord bot",
     "private": true,
+    "type": "module",
     "scripts": {
         "build": "tsc -p .",
-        "start": "tsc -p . && node ./build/main.js"
+        "start": "tsc -p . && node ./build/main.js --enable-source-maps",
+        "watch": "tsc-watch --noClear -p . --onSuccess 'node ./build/main.js'"
     },
     "dependencies": {
-        "date-fns": "^1",
+        "date-fns": "^2",
         "discord.js": "^13.6.0",
-        "lodash": "^4.17.13",
+        "lodash-es": "^4.17.13",
         "minimist": "^1.2.6",
         "sqlite": "^4",
         "sqlite3": "^5.0.3",
-        "typescript": "^4"
+        "typescript": "next"
     },
     "devDependencies": {
-        "@types/better-sqlite3": "*",
-        "@types/lodash": "*",
+        "@types/lodash-es": "*",
         "@types/minimist": "^1.2.2",
         "@types/node": "^17.0.24",
+        "@types/sqlite3": "^3.1.8",
         "@typescript-eslint/eslint-plugin": "^5.19.0",
         "@typescript-eslint/parser": "^5.19.0",
         "eslint": "^8.13.0",
-        "prettier": "^2.6.2"
+        "eslint-config-prettier": "^8.5.0",
+        "prettier": "^2.6.2",
+        "tsc-watch": "^5.0.3"
+    },
+    "engines": {
+        "node": ">=14.16"
     }
 }
